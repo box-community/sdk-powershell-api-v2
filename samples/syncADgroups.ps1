@@ -55,58 +55,89 @@ function New-UserHashfromBox($users)
     }
     return $new_hash
 }
+function Get-HasModified($datetime)
+{
+    #this function will compare the datetime in the parameter to the last time the task ran
+    #returns true if the parameter is prior to the task last runt ime
+
+    $lastRun = (Get-ScheduledTaskInfo -TaskName "Temp Test Task").lastruntime
+
+    if($datetime -gt $lastRun)
+    {
+        return $flase
+    }
+    else
+    {
+       return $true
+    }
+}
+
 
 function SyncBoxGroups($token)
 {
     $log = ""
 
-    $adgroups = Get-UADGroups #returns all AD groups that should be synced
-    $boxgroups = Get-BoxAllGroups -token $dev_token #returns all existing groups in Box using Box Powershell SDK v2
+    #check to see if the AD group has been modified since last script run
+    $modifiedDate = $(Get-ADGroup BoxSyncedGroups -Properties @("whenChanged")).whenChanged
 
-    $adHash = New-GroupHashfromAD($adgroups) #builds a hash table of all identified AD groups and their corresponding SIDs
-    $boxHash = New-GroupHashfromBox($boxgroups) #builds a hash table of all identified Box groups and their corresponding id's
-
-    # build the list of groups in AD but not Box
-    $addList = @()
-
-    foreach($group in @($adHash.keys))
+    if(Get-HasModified -datetime $modifedDate)
     {
-        if(-not $boxHash.Contains($group))
+        #the AD group has been modified since the last run, sync groups
+
+        $adgroups = Get-UADGroups #returns all AD groups that should be synced
+        $boxgroups = Get-BoxAllGroups -token $dev_token #returns all existing groups in Box using Box Powershell SDK v2
+
+        $adHash = New-GroupHashfromAD($adgroups) #builds a hash table of all identified AD groups and their corresponding SIDs
+        $boxHash = New-GroupHashfromBox($boxgroups) #builds a hash table of all identified Box groups and their corresponding id's
+
+        # build the list of groups in AD but not Box
+        $addList = @()
+
+        foreach($group in @($adHash.keys))
         {
-            $addList += $group
+            if(-not $boxHash.Contains($group))
+            {
+                $addList += $group
+            }
         }
-    }
 
-    $log += "Found $($addList.count) groups to create in Box.`r`n"
+        $log += "Found $($addList.count) groups to create in Box.`r`n"
 
-    #build the list of groups in Box but not AD
-    $delList = @()
+        #build the list of groups in Box but not AD
+        $delList = @()
 
-    foreach($group in @($boxHash.keys))
-    {
-        if(-not $adHash.Contains($group))
+        foreach($group in @($boxHash.keys))
         {
-            $delList += $group
+            if(-not $adHash.Contains($group))
+            {
+                $delList += $group
+            }
         }
+
+        $log += "Found $($delList.count) groups to delete in Box.`r`n"
+
+        #add missing groups to Box
+        foreach($group in $addList)
+        {
+            $log += "Creating group $group in Box..."
+            $gid = New-BoxGroup -token $dev_token -name $group #create a new group in Box using the Box Powershell SDK v2
+            $log += "Done!`r`n"
+        }
+
+        #remove groups from Box that are not in AD
+        foreach($group in $delList)
+        {
+            $log += "Deleting group $group from Box..."
+            Remove-BoxGroup -token $dev_token -groupID $boxHash[$group] #delete the Box group using the Box Powershell SDK v2
+            $log += "Done!`r`n"
+        }
+
     }
-
-    $log += "Found $($delList.count) groups to delete in Box.`r`n"
-
-    #add missing groups to Box
-    foreach($group in $addList)
+    else
     {
-        $log += "Creating group $group in Box..."
-        $gid = New-BoxGroup -token $dev_token -name $group #create a new group in Box using the Box Powershell SDK v2
-        $log += "Done!`r`n"
+        $log += "No changes since last run - not syncing groups."
     }
 
-    #remove groups from Box that are not in AD
-    foreach($group in $delList)
-    {
-        $log += "Deleting group $group from Box..."
-        Remove-BoxGroup -token $dev_token -groupID $boxHash[$group] #delete the Box group using the Box Powershell SDK v2
-        $log += "Done!`r`n"
-    }
     return $log
 }
 
