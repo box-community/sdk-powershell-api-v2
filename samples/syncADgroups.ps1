@@ -1,7 +1,7 @@
 ﻿function Get-UADGroups()
 {
     $parent = Get-ADGroup BoxSyncedGroups #Looks for the Active Directory group named BoxSyncedGroups
-    $members = Get-ADGroupMember $parent #finds all member groups
+    $members = Get-ADGroupMember $parent | where {$_.whenChanged -ge $(Get-LastRunTime)} #finds all member groups
 
     return $members
 }
@@ -60,7 +60,7 @@ function Get-HasModified($datetime)
     #this function will compare the datetime in the parameter to the last time the task ran
     #returns true if the parameter is prior to the task last runt ime
 
-    $lastRun = (Get-ScheduledTaskInfo -TaskName "Temp Test Task").lastruntime
+    $lastRun = (Get-ScheduledTaskInfo -TaskName "").lastruntime
 
     if($datetime -gt $lastRun)
     {
@@ -71,6 +71,11 @@ function Get-HasModified($datetime)
        return $true
     }
 }
+function Get-LastRunTime()
+{
+    #this will return the last run of the sync process
+    return (Get-ScheduledTaskInfo -TaskName "Temp Test Task").lastruntime
+}
 
 
 function SyncBoxGroups($token)
@@ -80,7 +85,7 @@ function SyncBoxGroups($token)
     #check to see if the AD group has been modified since last script run
     $modifiedDate = $(Get-ADGroup BoxSyncedGroups -Properties @("whenChanged")).whenChanged
 
-    if(Get-HasModified -datetime $modifedDate)
+    if($(Get-ADGroup BoxSyncedGroups -Properties @("whenChanged")).whenChanged -gt $(Get-LastRunTime))
     {
         #the AD group has been modified since the last run, sync groups
 
@@ -135,7 +140,7 @@ function SyncBoxGroups($token)
     }
     else
     {
-        $log += "No changes since last run - not syncing groups."
+        $log += "No changes since last run - not syncing groups.`r`n"
     }
 
     return $log
@@ -143,82 +148,90 @@ function SyncBoxGroups($token)
 
 function SyncBoxGroupMembers($token)
 {
-    $total = 0
-    $boxusers = Get-BoxAllUsers -token $dev_token #return all users in Box using the Box Powershell SDK v2
-    $boxuserhash = New-UserHashfromBox -users $boxusers #build a hash table of the returned users and their id's
-
-    $boxgroups = Get-BoxAllGroups -token $dev_token #return all groups in Box using the Box Powershell SDK v2
-    $boxHash = New-GroupHashfromBox($boxgroups) #build a hash table of the returned groups and their id's
-
     $adgroups = Get-UADGroups #returns all AD groups that should be synced
-    $adHash = New-GroupHashfromAD($adgroups) #build a hash table of the returned groups and their SID's
 
-    $log += "Beginning group membership update...`r`n"
-	
-	#iterate through each AD group
-    foreach($adgroup in @($adHash.Keys))
+    if($adgroups -ne $null)
     {
-        $log += "Updating membership of $adgroup.`r`n"
+        $adHash = New-GroupHashfromAD($adgroups) #build a hash table of the returned groups and their SID's
 
-        $boxmembers = Get-BoxGroupDetails -token $token -groupID $boxHash[$adgroup]
-        $admembers = (Get-ADGroupMember $adgroup -Recursive).samaccountname
+        $total = 0
+        $boxusers = Get-BoxAllUsers -token $dev_token #return all users in Box using the Box Powershell SDK v2
+        $boxuserhash = New-UserHashfromBox -users $boxusers #build a hash table of the returned users and their id's
 
-        $boxGroupID = $boxHash[$adgroup]
+        $boxgroups = Get-BoxAllGroups -token $dev_token #return all groups in Box using the Box Powershell SDK v2
+        $boxHash = New-GroupHashfromBox($boxgroups) #build a hash table of the returned groups and their id's
 
-        $boxmemberhash = New-GroupMemberHashFromBox -group $boxmembers
-
-        ## get list of users to add
-        $addList = @()
-
-        foreach($user in $admembers)
+        $log += "Beginning group membership update...`r`n"
+	
+	    #iterate through each AD group
+        foreach($adgroup in @($adHash.Keys))
         {
-            $login = $user + "@<your-domain>"
-            if(-not $boxmemberhash.Contains($login))
-            {
-                $addList += $login
-            }
-        }
-        $log += "$($addList.Count) members to add to group $adgroup.`r`n"
+            $log += "Updating membership of $adgroup.`r`n"
 
-        #get list of users to delete
-        $delList = @{}
+            $boxmembers = Get-BoxGroupDetails -token $token -groupID $boxHash[$adgroup]
+            $admembers = (Get-ADGroupMember $adgroup -Recursive).samaccountname
 
-        foreach($user in @($boxmemberhash.Keys))
-        {
-            $account = $user.Substring(0,$user.IndexOf('@'))
-            if(-not $admembers.Contains($account.ToUpper()))
-            {
-                $delList.Add($user,$boxmemberhash[$user])
-            }
-        }
-        $log += "$($delList.Count) members to remove from group $adgroup.`r`n"
+            $boxGroupID = $boxHash[$adgroup]
 
-        #add users to Box group
-        foreach($user in $addList)
-        {
-            #only add the user if they exist in Box, otherwise, skip
-            if($boxuserhash.Contains($user))
-            {
-                #add to group
-                $add = Add-BoxGroupMember -token $token -groupID $boxGroupID -userID $boxuserhash[$user]
-                $log += "$user added to Box group $adgroup.`r`n"
-            }
-            else
-            {
-                $log += "$user not found in Box, cannot add to $adgroup.`r`n"
-            }
-        }
+            $boxmemberhash = New-GroupMemberHashFromBox -group $boxmembers
 
-        #delete users from Box group
-        foreach($username in @($delList.Keys))
-        {
-            Remove-BoxGroupMember -token $token -userID $delList[$username] -groupID $boxGroupID
-            $log += "$username removed from Box group $adgroup.`r`n"
+            ## get list of users to add
+            $addList = @()
+
+            foreach($user in $admembers)
+            {
+                $login = $user + "@<your-domain>"
+                if(-not $boxmemberhash.Contains($login))
+                {
+                    $addList += $login
+                }
+            }
+            $log += "$($addList.Count) members to add to group $adgroup.`r`n"
+
+            #get list of users to delete
+            $delList = @{}
+
+            foreach($user in @($boxmemberhash.Keys))
+            {
+                $account = $user.Substring(0,$user.IndexOf('@'))
+                if(-not $admembers.Contains($account.ToUpper()))
+                {
+                    $delList.Add($user,$boxmemberhash[$user])
+                }
+            }
+            $log += "$($delList.Count) members to remove from group $adgroup.`r`n"
+
+            #add users to Box group
+            foreach($user in $addList)
+            {
+                #only add the user if they exist in Box, otherwise, skip
+                if($boxuserhash.Contains($user))
+                {
+                    #add to group
+                    $add = Add-BoxGroupMember -token $token -groupID $boxGroupID -userID $boxuserhash[$user]
+                    $log += "$user added to Box group $adgroup.`r`n"
+                }
+                else
+                {
+                    $log += "$user not found in Box, cannot add to $adgroup.`r`n"
+                }
+            }
+
+            #delete users from Box group
+            foreach($username in @($delList.Keys))
+            {
+                Remove-BoxGroupMember -token $token -userID $delList[$username] -groupID $boxGroupID
+                $log += "$username removed from Box group $adgroup.`r`n"
+            }
+            $total++
         }
-        $total++
-    }
     
-    $log += "Done!  Updated $($adhash.count) groups.`r`n"
+        $log += "Done!  Updated $($adhash.count) groups.`r`n"
+    }
+    else
+    {
+        $log += "No changes to group memberships - nothing to update.`r`n"
+    }
 
     return $log
 }
