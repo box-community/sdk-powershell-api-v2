@@ -16,6 +16,31 @@ function New-BoxGroup($token, $name)
     return $return.id
 }
 
+function New-BoxGroup2($token, $name)
+{
+    #create a new Box group with the name given in $name
+    #returns the groupid
+
+    $uri = "https://api.box.com/2.0/groups"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $json = '{"name": "' + $name + '","provenance": "MSAD","invitability_level": "all_managed_users","member_viewability_level": "admins_and_members"}'
+    
+    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "applicaiton/json"
+
+    return $return.id
+}
+
+function Get-BoxGroup($token, $groupID)
+{
+    $uri = "https://api.box.com/2.0/groups/$($groupID)?fields=provenance,invitability_level,member_viewability_level"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    
+    return $return
+}
+
 function Remove-BoxGroup($token, $groupID)
 {
     #deletes the given group based on group ID
