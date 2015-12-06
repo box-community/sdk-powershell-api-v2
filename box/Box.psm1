@@ -314,3 +314,9 @@ function Get-BoxToken($clientID, $client_secret)
        return (Get-ItemProperty -Path $reg_key -Name "access_token").access_token
     }
 }
+
+# Custom Objects
+$BoxScope = New-Object PSObject
+$BoxScope | Add-Member -NotePropertyName admins -NotePropertyValue admins_only
+$BoxScope | Add-Member -NotePropertyName members -NotePropertyValue admins_and_members
+$BoxScope | Add-Member -NotePropertyName all -NotePropertyValue all_managed_users
