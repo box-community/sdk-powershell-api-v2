@@ -1,6 +1,7 @@
 ﻿## If you use a proxy, define it here (ie 'http://server.domain.tld:port')
 #$PSDefaultParameterValues = @{'Invoke-RestMethod:Proxy' = 'http://server.domain.tld:1234'}
 
+# Group Functions
 function New-BoxGroup($token, $name)
 {
     #create a new Box group with the name given in $name
@@ -108,6 +109,19 @@ function Get-BoxAllGroups($token)
     }
 }
 
+function Get-BoxGroupDetails($token, $groupID)
+{
+    #input: group id
+    #output: group details including member list
+    $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    
+    return $return.entries
+}
+
+# User Functions
 function Get-BoxAllUsers($token)
 {
     $uri = "https://api.box.com/2.0/users"
@@ -135,18 +149,6 @@ function Get-BoxAllUsers($token)
         }
         return $users
     }
-}
-
-function Get-BoxGroupDetails($token, $groupID)
-{
-    #input: group id
-    #output: group details including member list
-    $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
-    $headers = @{"Authorization"="Bearer $token"}
-
-    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
-    
-    return $return.entries
 }
 
 function Get-BoxUserID($username, $token)
@@ -189,6 +191,8 @@ function Set-BoxUser($id, $quota, $token)
     $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "applicaiton/json"
 
 }
+
+# API Functions
 function New-BoxoAUTHCode($clientID)
 {
     $sec_token_sent = "security_token%3DKnhMJatFipTAnM0nHlZA"
