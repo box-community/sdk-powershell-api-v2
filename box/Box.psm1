@@ -192,6 +192,17 @@ function Set-BoxUser($id, $quota, $token)
 
 }
 
+# Content Functions
+function Move-BoxRootFolder($token, $userID, $ownerUserID)
+{
+    $uri = "https://api.box.com/2.0/users/$userID/folders/0?"
+    $headers = @{"Authorization"="Bearer $token"}
+ 
+    $json = '{"owned_by": {"id": "' + $ownerUserID + '"}}'
+   
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+}
+
 # API Functions
 function New-BoxoAUTHCode($clientID)
 {
