@@ -1,6 +1,7 @@
 ﻿## If you use a proxy, define it here (ie 'http://server.domain.tld:port')
 #$PSDefaultParameterValues = @{'Invoke-RestMethod:Proxy' = 'http://server.domain.tld:1234'}
 
+# Group Functions
 function New-BoxGroup($token, $name)
 {
     #create a new Box group with the name given in $name
@@ -133,6 +134,19 @@ function Get-BoxAllGroups($token)
     }
 }
 
+function Get-BoxGroupDetails($token, $groupID)
+{
+    #input: group id
+    #output: group details including member list
+    $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    
+    return $return.entries
+}
+
+# User Functions
 function Get-BoxAllUsers($token)
 {
     $uri = "https://api.box.com/2.0/users"
@@ -160,18 +174,6 @@ function Get-BoxAllUsers($token)
         }
         return $users
     }
-}
-
-function Get-BoxGroupDetails($token, $groupID)
-{
-    #input: group id
-    #output: group details including member list
-    $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
-    $headers = @{"Authorization"="Bearer $token"}
-
-    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
-    
-    return $return.entries
 }
 
 function Get-BoxUserID($username, $token)
@@ -215,6 +217,21 @@ function Set-BoxUser($id, $quota, $token)
 
 }
 
+<<<<<<< HEAD
+=======
+# Content Functions
+function Move-BoxRootFolder($token, $userID, $ownerUserID)
+{
+    $uri = "https://api.box.com/2.0/users/$userID/folders/0?"
+    $headers = @{"Authorization"="Bearer $token"}
+ 
+    $json = '{"owned_by": {"id": "' + $ownerUserID + '"}}'
+   
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+}
+
+# API Functions
+>>>>>>> origin/master
 function New-BoxoAUTHCode($clientID)
 {
     $sec_token_sent = "security_token%3DKnhMJatFipTAnM0nHlZA"
@@ -336,3 +353,9 @@ function Get-BoxToken($clientID, $client_secret)
        return (Get-ItemProperty -Path $reg_key -Name "access_token").access_token
     }
 }
+
+# Custom Objects
+$BoxScope = New-Object PSObject
+$BoxScope | Add-Member -NotePropertyName admins -NotePropertyValue admins_only
+$BoxScope | Add-Member -NotePropertyName members -NotePropertyValue admins_and_members
+$BoxScope | Add-Member -NotePropertyName all -NotePropertyValue all_managed_users
