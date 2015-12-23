@@ -55,22 +55,6 @@ function New-UserHashfromBox($users)
     }
     return $new_hash
 }
-function Get-HasModified($datetime)
-{
-    #this function will compare the datetime in the parameter to the last time the task ran
-    #returns true if the parameter is prior to the task last runt ime
-
-    $lastRun = (Get-ScheduledTaskInfo -TaskName "").lastruntime
-
-    if($datetime -gt $lastRun)
-    {
-        return $flase
-    }
-    else
-    {
-       return $true
-    }
-}
 function Get-LastRunTime()
 {
     #this will return the last run of the sync process

@@ -214,6 +214,7 @@ function Set-BoxUser($id, $quota, $token)
     $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "applicaiton/json"
 
 }
+
 function New-BoxoAUTHCode($clientID)
 {
     $sec_token_sent = "security_token%3DKnhMJatFipTAnM0nHlZA"
