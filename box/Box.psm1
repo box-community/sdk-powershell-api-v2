@@ -217,8 +217,6 @@ function Set-BoxUser($id, $quota, $token)
 
 }
 
-<<<<<<< HEAD
-=======
 # Content Functions
 function Move-BoxRootFolder($token, $userID, $ownerUserID)
 {
@@ -231,7 +229,6 @@ function Move-BoxRootFolder($token, $userID, $ownerUserID)
 }
 
 # API Functions
->>>>>>> origin/master
 function New-BoxoAUTHCode($clientID)
 {
     $sec_token_sent = "security_token%3DKnhMJatFipTAnM0nHlZA"
