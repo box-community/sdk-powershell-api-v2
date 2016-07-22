@@ -164,7 +164,7 @@ function Get-BoxToken($clientID, $client_secret)
     }
 }
 # Function to check existing access token and decide if a new one is needed, if so get it using refresh token and update in secure_dir files
-function Get-BoxToken($cid, $cs, $secure_dir)
+function Get-BoxTokenFromFile($cid, $cs, $secure_dir)
 {
 
     $debug_log = ""
