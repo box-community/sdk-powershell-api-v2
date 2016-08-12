@@ -85,3 +85,11 @@ function Set-BoxUser($id, $attribute, $value, $token)
     $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/json"
 
 }
+# Function to delete a user
+function Delete-BoxUser($id, $token)
+{
+    $uri = "https://api.box.com/2.0/users/" + $id
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers
+}
