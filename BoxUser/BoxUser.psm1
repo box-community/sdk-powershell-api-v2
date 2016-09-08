@@ -70,15 +70,31 @@ function Get-BoxUser-FromId($id, $token)
 }
 
 # Function to create a new user
-function New-BoxUser($login, $name, $quota, $sync_enabled)
+function New-BoxUser($login, $name, $token)
 {
-    return $false
+    $uri = "https://api.box.com/2.0/users"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $json = '{'
+    $json += '"login": "' + $login + '",'
+    $json += '"name": "' + $name + '"'
+    $json += '}'
+
+    $result = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "application/json"
+
+    return $result.id
 }
 
 # function to remove a Box user
-function Remove-BoxUser()
+function Remove-BoxUser($id, $token)
 {
-    return $false
+    #sets the given attribute to be the value passed
+    $uri = "https://api.box.com/2.0/users/" + $id
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+
+    return $return
 }
 
 # Function to set an attribute on a user object
