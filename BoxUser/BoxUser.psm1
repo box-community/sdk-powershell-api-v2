@@ -68,11 +68,19 @@ function Get-BoxUser-FromId($id, $token)
     
     return $return
 }
-# Function to add a new user
-function Add-BoxUser($login, $name, $quota, $sync_enabled)
+
+# Function to create a new user
+function New-BoxUser($login, $name, $quota, $sync_enabled)
 {
-return false
+    return $false
 }
+
+# function to remove a Box user
+function Remove-BoxUser()
+{
+    return $false
+}
+
 # Function to set an attribute on a user object
 function Set-BoxUser($id, $attribute, $value, $token)
 {
