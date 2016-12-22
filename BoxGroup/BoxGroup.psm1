@@ -1,6 +1,16 @@
 # Group Functions
-function New-BoxGroup($token, $name)
+function New-BoxGroup()
 {
+    param(
+    [Parameter(Mandatory=$true)] [string] $token,
+    [Parameter(Mandatory=$true)] [string] $name,
+    [string] $description,
+    [string] $external_id,
+    [string] $provenance,
+    [string] $invitability,
+    [string] $viewability
+    ) 
+
     #create a new Box group with the name given in $name
     #returns the groupid
 
