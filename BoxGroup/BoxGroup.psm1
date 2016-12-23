@@ -39,6 +39,50 @@ function New-BoxGroup()
     return $return.id
 }
 
+function Set-BoxGroup()
+{
+    param(
+    [Parameter(Mandatory=$true)] [string] $token,
+    [Parameter(Mandatory=$true)] [string] $groupID,
+    $name,
+    [string] $description,
+    $external_id,
+    $provenance,
+    $invitability,
+    $viewability
+    ) 
+
+    #invitability_level and member_viewability_level support the following options:
+    #admins_only
+    #admins_and_members
+    #all_managed_users
+
+    #create a new Box group with the name given in $name
+    #returns the groupid
+
+    $uri = "https://api.box.com/2.0/groups/" + $groupID
+    $headers = @{"Authorization"="Bearer $token"}
+
+    #build JSON - no mandatory fields
+
+    $json = '{'
+
+    if($name){$json += '"name": "' + $name + '", '}
+    if($provenance){ $json += '"provenance": "' + $provenance + '", '}
+    if($description){ $json += '"description": "' + $description + '", '}
+    if($external_id){ $json += '"external_sync_identifier": "' + $external_id + '", '}
+    if($invitability){ $json += '"invitability_level": "' + $invitability + '", '}
+    if($viewability){ $json += '"member_viewability_level": "' + $viewability + '", '}
+
+    $json = $json.Substring(0,$json.Length - 3)
+
+    $json += '"}'
+    
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "applicaiton/json"
+
+    return $return.id
+}
+
 function Remove-BoxGroup($token, $groupID)
 {
     #deletes the given group based on group ID
