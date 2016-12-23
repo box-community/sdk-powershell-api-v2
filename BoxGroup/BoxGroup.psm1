@@ -5,11 +5,16 @@ function New-BoxGroup()
     [Parameter(Mandatory=$true)] [string] $token,
     [Parameter(Mandatory=$true)] [string] $name,
     [string] $description,
-    [string] $external_id,
-    [string] $provenance,
-    [string] $invitability,
-    [string] $viewability
+    $external_id,
+    $provenance,
+    $invitability,
+    $viewability
     ) 
+
+    #invitability_level and member_viewability_level support the following options:
+    #admins_only
+    #admins_and_members
+    #all_managed_users
 
     #create a new Box group with the name given in $name
     #returns the groupid
@@ -17,7 +22,17 @@ function New-BoxGroup()
     $uri = "https://api.box.com/2.0/groups"
     $headers = @{"Authorization"="Bearer $token"}
 
-    $json = '{"name": "' + $name + '"}'
+    #build JSON - name is the only mandatory field
+    $json = '{'
+    $json += '"name": "' + $name
+
+    if($provenance){ $json += '", "provenance": "' + $provenance}
+    if($description){ $json += '", "description": "' + $description}
+    if($external_id){ $json += '", "external_sync_identifier": "' + $external_id}
+    if($invitability){ $json += '", "invitability_level": "' + $invitability}
+    if($viewability){ $json += '", "member_viewability_level": "' + $viewability}
+
+    $json += '"}'
     
     $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "applicaiton/json"
 
