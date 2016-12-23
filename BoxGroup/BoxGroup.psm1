@@ -186,3 +186,15 @@ function Get-BoxGroupDetails($token, $groupID)
     
     return $return.entries
 }
+
+function Get-BoxGroup($token, $groupID)
+{
+	#input: group id
+    #output: group fields
+    $uri = "https://api.box.com/2.0/groups/$groupID" + "?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    
+    return $return
+}
