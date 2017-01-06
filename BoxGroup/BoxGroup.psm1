@@ -166,7 +166,7 @@ function Get-BoxAllGroups($token)
         while($returned -le $return.total_count)
         {
             #get the next batch of groups
-            $uri = "https://api.box.com/2.0/groups?limit=1000&offset=$returned"
+            $uri = "https://api.box.com/2.0/groups?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level,limit=1000&offset=$returned"
             $more_return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
             $groups += $more_return.entries
             $returned += $more_return.limit
