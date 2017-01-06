@@ -148,7 +148,7 @@ function Get-BoxGroupMembers($groupID, $token)
 
 function Get-BoxAllGroups($token)
 {
-    $uri = "https://api.box.com/2.0/groups"
+    $uri = "https://api.box.com/2.0/groups?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level"
     $headers = @{"Authorization"="Bearer $token"}
     $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
     
