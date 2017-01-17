@@ -134,16 +134,52 @@ function Remove-BoxGroupMembership($token, $membershipID)
 
 function Get-BoxGroupMembers($groupID, $token)
 {
-    $members = Get-BoxGroupDetails -token $token -groupID $groupID
+    #input: group id, token
+    #output: group membership in hash table of name, ID 
 
-    $var = @{}
+    $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
+    $headers = @{"Authorization"="Bearer $token"}
 
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
+
+    $var = @{} #variable to hold the member hash table
+
+    #this is the base case of the first 100 members
+
+    $members = $return.entries
+        
     foreach($member in $members.user)
     {
         $var.Add($member.login,$member.id)
     }
 
-    return $var
+    if($return.total_count -le $return.limit)
+    {
+        #there are no more than 100 members, no need to make additional API calls
+        return $var
+    }
+    else
+    {
+        #more than 100 members exist so additional API calls are needed until total_count is reached
+
+        $returned = $return.limit #update the number returned so far
+
+        #iterate through the remaining entries in 100 member pages
+        while($returned -le $return.total_count)
+        {
+            $uri = "https://api.box.com/2.0/groups/$groupID/memberships?offset=$returned"
+            $more_return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
+            $members = $more_return.entries
+            $returned += $more_return.limit
+
+            foreach($member in $members.user)
+            {
+                $var.Add($member.login,$member.id)
+            }
+        }
+
+        return $var
+    }
 }
 
 function Get-BoxAllGroups($token)
@@ -178,7 +214,7 @@ function Get-BoxAllGroups($token)
 function Get-BoxGroupDetails($token, $groupID)
 {
     #input: group id
-    #output: group details including member list
+    #output: group details including partial member list
     $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
     $headers = @{"Authorization"="Bearer $token"}
 
