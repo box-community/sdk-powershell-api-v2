@@ -34,7 +34,7 @@ function New-BoxGroup()
 
     $json += '"}'
     
-    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "applicaiton/json"
+    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "application/json"
 
     return $return.id
 }
@@ -78,7 +78,7 @@ function Set-BoxGroup()
 
     $json += '"}'
     
-    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "applicaiton/json"
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/json"
 
     return $return.id
 }
@@ -90,7 +90,7 @@ function Remove-BoxGroup($token, $groupID)
     $uri = "https://api.box.com/2.0/groups/$groupID"
     $headers = @{"Authorization"="Bearer $token"}
 
-    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "application/x-www-form-urlencoded"
 }
 
 function Add-BoxGroupMember($token, $userID, $groupID)
@@ -102,7 +102,7 @@ function Add-BoxGroupMember($token, $userID, $groupID)
     $headers = @{"Authorization"="Bearer $token"}
     $json = '{ "user": { "id": "' + $userID + '"}, "group": { "id": "' + $groupID + '" } }'
 
-    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "applicaiton/json"
+    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "application/json"
     
 }
 
@@ -129,7 +129,7 @@ function Remove-BoxGroupMembership($token, $membershipID)
     $uri = "https://api.box.com/2.0/group_memberships/$membershipID"
     $headers = @{"Authorization"="Bearer $token"}
 
-    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "application/x-www-form-urlencoded"
 }
 
 function Get-BoxGroupMembers($groupID, $token)
@@ -150,7 +150,7 @@ function Get-BoxAllGroups($token)
 {
     $uri = "https://api.box.com/2.0/groups?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level"
     $headers = @{"Authorization"="Bearer $token"}
-    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
     
     #by default, only 100 groups are returned. If more groups exist, they must be iterated through in sets of 1000
     if($return.total_count -le $return.limit)
@@ -167,7 +167,7 @@ function Get-BoxAllGroups($token)
         {
             #get the next batch of groups
             $uri = "https://api.box.com/2.0/groups?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level,limit=1000&offset=$returned"
-            $more_return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+            $more_return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
             $groups += $more_return.entries
             $returned += $more_return.limit
         }
@@ -182,7 +182,7 @@ function Get-BoxGroupDetails($token, $groupID)
     $uri = "https://api.box.com/2.0/groups/$groupID/memberships"
     $headers = @{"Authorization"="Bearer $token"}
 
-    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
     
     return $return.entries
 }
@@ -194,7 +194,7 @@ function Get-BoxGroup($token, $groupID)
     $uri = "https://api.box.com/2.0/groups/$groupID" + "?fields=name,description,provenance,external_sync_identifier,invitability_level,member_viewability_level"
     $headers = @{"Authorization"="Bearer $token"}
 
-    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
     
     return $return
 }
