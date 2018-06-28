@@ -122,7 +122,7 @@ function Get-BoxToken($clientID, $client_secret)
 
         #if the token age is over a hour, we need to refresh
         $refresh_token = (Get-ItemProperty -Path $reg_key -Name "refresh_token").refresh_token
-        $uri = "https://www.box.com/api/oauth2/token”
+        $uri = "https://www.box.com/api/oauth2/token"
         $data = "grant_type=refresh_token&refresh_token=" + $refresh_token + "&client_id=" + $clientID + "&client_secret=" + $client_secret
 
         try{
