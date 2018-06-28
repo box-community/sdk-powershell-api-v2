@@ -43,3 +43,5 @@ function New-BoxFolder($token, $parent, $name)
 
     return $result.id
 }
+
+#copy all of a users content
