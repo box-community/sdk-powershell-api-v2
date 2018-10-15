@@ -1,6 +1,9 @@
 ﻿## If you use a proxy, define it here (ie 'http://server.domain.tld:port')
 #$PSDefaultParameterValues = @{'Invoke-RestMethod:Proxy' = 'http://server.domain.tld:1234'}
 
+#set TLS version to 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Group Functions
 function New-BoxGroup($token, $name)
 {
