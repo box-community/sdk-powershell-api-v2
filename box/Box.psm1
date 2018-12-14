@@ -149,7 +149,8 @@ function Get-BoxGroupDetails($token, $groupID)
     return $return.entries
 }
 
-# User Functions
+## User Functions ##
+
 function Get-BoxAllUsers($token)
 {
     $uri = "https://api.box.com/2.0/users"
@@ -220,18 +221,8 @@ function Set-BoxUser($id, $quota, $token)
 
 }
 
-# Content Functions
-function Move-BoxRootFolder($token, $userID, $ownerUserID)
-{
-    $uri = "https://api.box.com/2.0/users/$userID/folders/0?"
-    $headers = @{"Authorization"="Bearer $token"}
- 
-    $json = '{"owned_by": {"id": "' + $ownerUserID + '"}}'
-   
-    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
-}
 
-# API Functions
+## API Functions ##
 function New-BoxoAUTHCode($clientID)
 {
     $sec_token_sent = "security_token%3DKnhMJatFipTAnM0nHlZA"
@@ -352,6 +343,93 @@ function Get-BoxToken($clientID, $client_secret)
        #the token is still valid
        return (Get-ItemProperty -Path $reg_key -Name "access_token").access_token
     }
+}
+
+## Content Functions ##
+
+function Get-BoxSubItems($token, $parent)
+{
+    #returns all items in the given parent folder
+    $uri = "https://api.box.com/2.0/folders/$parent/items"
+    $headers = @{"Authorization"="Bearer $token"}
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+
+    if($return.total_count -le $return.limit)
+    {
+        return $return.entries
+    }
+    else
+    {
+        #handle paging when over 1000 entries are returned
+        $returned = $return.limit
+
+        $folders = $return.entries
+
+        while($returned -le $return.total_count)
+        {
+            #get the next page of folders
+            $uri = "https://api.box.com/2.0/users?limit=1000&offset=$returned"
+            $more_return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "applicaiton/x-www-form-urlencoded"
+            $folders += $more_return.entries
+            $returned += $more_return.limit
+        }
+        return $folders
+    }
+}
+
+function Move-BoxRootFolder($token, $userID, $ownerUserID)
+{
+    $uri = "https://api.box.com/2.0/users/$userID/folders/0?"
+    $headers = @{"Authorization"="Bearer $token"}
+ 
+    $json = '{"owned_by": {"id": "' + $ownerUserID + '"}}'
+   
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+}
+
+## Collaboration Functions ##
+function New-BoxCollaboration($token, $folderID, $role, $userID)
+{
+    #creates a new collaboration
+    #possible roles include: owner, editor, viewer, previewer, uploader, previewer uploader, viewer uploader, or co-owner
+    #returns the collaboration id
+
+    $uri = "https://api.box.com/2.0/collaborations"
+    $headers = @{"Authorization"="Bearer $token"}
+ 
+    $json = '{"item":{"id": "' + $folderID + '","type": "folder"},"accessible_by":{"id":"' + $userID + '","type":"user"},"role":"' + $role + '"}'
+
+    $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+
+    return $return.id
+}
+
+function Set-BoxCollaboration($token, $collabID, $role)
+{
+    $uri = "https://api.box.com/2.0/collaborations/$collabID"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $json = '{"role":"' + $role + '"}'
+    return Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+}
+
+function Get-BoxFolderCollab($token, $folderID)
+{
+    #returns the collaborations on the given folder
+    
+    $uri = "https://api.box.com/2.0/folders/$folderID/collaborations"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    return Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
+}
+
+function Remove-BoxCollaborator($token, $collabID)
+{
+    #removes the collaboration ID
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $uri = "https://api.box.com/2.0/collaborations/$collabID"
+    return Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "application/x-www-form-urlencoded"
 }
 
 # Custom Objects
