@@ -387,6 +387,16 @@ function Move-BoxRootFolder($token, $userID, $ownerUserID)
     $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
 }
 
+function Set-BoxFolderName($token, $folderID, $name)
+{
+    #renames the given folder to the given name
+    $uri = "https://api.box.com/2.0/folders/$folderID"
+    $headers = @{"Authorization"="Bearer $token"}
+
+    $json = '{"name":"' + $name + '"}'
+    return Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+}
+
 ## Collaboration Functions ##
 function New-BoxCollaboration($token, $folderID, $role, $userID)
 {
