@@ -394,7 +394,9 @@ function Set-BoxFolderName($token, $folderID, $name)
     $headers = @{"Authorization"="Bearer $token"}
 
     $json = '{"name":"' + $name + '"}'
-    return Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+
+    return $return
 }
 
 ## Collaboration Functions ##
@@ -407,7 +409,7 @@ function New-BoxCollaboration($token, $folderID, $role, $userID)
     $uri = "https://api.box.com/2.0/collaborations"
     $headers = @{"Authorization"="Bearer $token"}
  
-    $json = '{"item":{"id": "' + $folderID + '","type": "folder"},"accessible_by":{"id":"' + $userID + '","type":"user"},"role":"' + $role + '"}'
+    $json = '{"item":{"id":"' + $folderID + '","type":"folder"},"accessible_by":{"id":"' + $userID + '","type":"user"},"role":"' + $role + '"}'
 
     $return = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
 
@@ -420,7 +422,14 @@ function Set-BoxCollaboration($token, $collabID, $role)
     $headers = @{"Authorization"="Bearer $token"}
 
     $json = '{"role":"' + $role + '"}'
-    return Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+
+    try{
+    $return = Invoke-RestMethod -Uri $uri -Method Put -Headers $headers -Body $json -ContentType "application/x-www-form-urlencoded"
+    }
+    catch{
+        $return = $null
+    }
+    return $return
 }
 
 function Get-BoxFolderCollab($token, $folderID)
@@ -430,7 +439,9 @@ function Get-BoxFolderCollab($token, $folderID)
     $uri = "https://api.box.com/2.0/folders/$folderID/collaborations"
     $headers = @{"Authorization"="Bearer $token"}
 
-    return Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -ContentType "application/x-www-form-urlencoded"
+
+    return $return
 }
 
 function Remove-BoxCollaborator($token, $collabID)
@@ -439,7 +450,9 @@ function Remove-BoxCollaborator($token, $collabID)
     $headers = @{"Authorization"="Bearer $token"}
 
     $uri = "https://api.box.com/2.0/collaborations/$collabID"
-    return Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "application/x-www-form-urlencoded"
+    $return = Invoke-RestMethod -Uri $uri -Method Delete -Headers $headers -ContentType "application/x-www-form-urlencoded"
+
+    return $return
 }
 
 # Custom Objects
