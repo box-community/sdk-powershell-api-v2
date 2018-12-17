@@ -1,3 +1,5 @@
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Function to get all users back for an Enterprise
 function Get-BoxAllUsers($token)
 {
